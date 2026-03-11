@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>可爱番茄钟 - 专注每一刻 Pro</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=ZCOOL+KuaiLe&display=swap');
+
+        :root {
+            --tomato-red: #FF7675; 
+            --tomato-light: #FF9F9F;
+            --tomato-dark: #EF5350;
+            --leaf-green: #C1E1C1; 
+            --leaf-dark: #9BB89B;
+            --cream-bg: #FFFAFA;
+        }
+
+        body {
+            background-color: var(--cream-bg);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+        }
+
+        .font-cute {
+            font-family: 'ZCOOL KuaiLe', cursive, sans-serif;
+        }
+
+        .main-card {
+            background: white;
+            border: 8px solid var(--tomato-red);
+            border-radius: 60px;
+            box-shadow: 0 15px 40px rgba(255, 118, 117, 0.15);
+            position: relative;
+            z-index: 5;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        /* 顶部进度条 */
+        #progress-bar {
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 8px;
+            background-color: var(--tomato-red);
+            width: 0%;
+            transition: width 1s linear;
+        }
+
+        .timer-text {
+            color: var(--tomato-red);
+            font-variant-numeric: tabular-nums;
+            text-shadow: 2px 2px 0px rgba(255, 118, 117, 0.05);
+        }
+
+        /* 模式切换按钮样式 */
+        .btn-mode {
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            transition: all 0.3s;
+            color: #FFADAD;
+            border: 2px solid transparent;
+        }
+
+        .btn-mode.active {
+            background-color: #FFF5F5;
+            color: var(--tomato-red);
+            border-color: var(--tomato-red);
+        }
+
+        /* 主操作按钮 */
+        .btn-primary {
+            background-color: var(--tomato-red);
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .btn-primary:hover {
+            transform: scale(1.05);
+            background-color: var(--tomato-light);
+        }
+
+        /* 响铃时的停止按钮 */
+        .btn-stop {
+            background-color: var(--tomato-dark);
+            animation: pulse-red 1.5s infinite;
+        }
+
+        @keyframes pulse-red {
+            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 83, 80, 0.7); }
+            70% { transform: scale(1.1); box-shadow: 0 0 0 15px rgba(239, 83, 80, 0); }
+            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 83, 80, 0); }
+        }
+
+        .btn-secondary {
+            background-color: var(--leaf-green);
+            color: #556B2F;
+            transition: all 0.3s ease;
+        }
+
+        .btn-outline {
+            border: 2px solid var(--tomato-red);
+            color: var(--tomato-red);
+            transition: all 0.3s ease;
+        }
+
+        /* 左右漂浮的小番茄 */
+        .tomato-icon {
+            filter: drop-shadow(0 4px 8px rgba(255,118,117,0.3));
+            animation: float 3s infinite ease-in-out;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0) rotate(0); }
+            50% { transform: translateY(-10px) rotate(5deg); }
+        }
+
+        .counter-badge {
+            background: #FFF5F5;
+            padding: 4px 15px;
+            border-radius: 99px;
+            font-size: 0.85rem;
+            color: var(--tomato-red);
+            border: 1px solid rgba(255, 118, 117, 0.2);
+        }
+
+        .hidden-el {
+            display: none !important;
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen">
+
+    <!-- 闹钟音乐 -->
+    <audio id="alarmAudio" src="music.mp3" loop></audio>
+
+    <div class="relative flex items-center justify-center w-full max-w-2xl px-4">
+        
+        <!-- 左侧装饰 -->
+        <div class="hidden md:block tomato-icon mr-4">
+            <svg width="60" height="60" viewBox="0 0 100 100">
+                <circle cx="50" cy="55" r="40" fill="#FF7675" />
+                <path d="M50 25 C45 15, 55 15, 50 25" stroke="#C1E1C1" stroke-width="8" stroke-linecap="round"/>
+                <path d="M40 22 L50 30 L60 22" stroke="#C1E1C1" stroke-width="6" stroke-linecap="round"/>
+                <circle cx="40" cy="45" r="4" fill="white" opacity="0.3"/>
+            </svg>
+        </div>
+
+        <!-- 番茄钟卡片 -->
+        <div class="main-card w-full max-w-sm p-10 flex flex-col items-center space-y-8">
+            <div id="progress-bar"></div>
+
+            <!-- 模式切换 -->
+            <div class="flex space-x-1 bg-pink-50 p-1 rounded-full font-cute">
+                <button onclick="setMode('work')" id="mode-work" class="btn-mode active">专注</button>
+                <button onclick="setMode('short')" id="mode-short" class="btn-mode">小憩</button>
+                <button onclick="setMode('long')" id="mode-long" class="btn-mode">长假</button>
+            </div>
+            
+            <header class="text-center">
+                <div id="counterDisplay" class="counter-badge mb-2 font-cute">今日成就: 🍅 x 0</div>
+                <h1 id="modeTitle" class="font-cute text-2xl text-red-400 tracking-widest">专注时刻</h1>
+            </header>
+            
+            <!-- 倒计时数字 -->
+            <div id="timer" class="text-7xl font-bold timer-text tracking-tighter">
+                25:00
+            </div>
+
+            <!-- 停止响铃按钮 -->
+            <button id="stopAlarmBtn" class="hidden-el btn-stop text-white font-cute text-2xl py-6 px-10 rounded-full shadow-2xl z-20">
+                停止响铃 🎵
+            </button>
+
+            <!-- 操作按钮组 -->
+            <div id="controlGroup" class="flex flex-col w-full space-y-4">
+                <button id="startBtn" class="btn-primary text-white font-cute text-xl py-4 rounded-full shadow-lg">
+                    开始专注吧
+                </button>
+                <div class="flex space-x-3">
+                    <button id="finishEarlyBtn" class="flex-1 btn-outline font-cute text-lg py-3 rounded-full shadow-sm">
+                        提前结束
+                    </button>
+                    <button id="resetBtn" class="flex-1 btn-secondary text-lg py-3 rounded-full shadow-sm font-cute">
+                        重置
+                    </button>
+                </div>
+            </div>
+
+            <!-- 状态信息与播放信息 -->
+            <div class="w-full">
+                <p id="statusLabel" class="text-red-300 text-center font-medium italic text-sm mb-4">按空格键也可以开关哦~</p>
+                
+                <div id="musicDisplay" class="hidden-el flex items-center justify-center space-x-2 bg-pink-50 p-3 rounded-2xl border border-dashed border-red-200">
+                    <span class="animate-bounce">🎵</span>
+                    <p class="text-red-400 text-xs font-medium">正在播放：周杰伦 - 《11月的肖邦》</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 右侧装饰 -->
+        <div class="hidden md:block tomato-icon ml-4" style="animation-delay: -1.5s;">
+            <svg width="60" height="60" viewBox="0 0 100 100">
+                <circle cx="50" cy="55" r="40" fill="#FF7675" />
+                <path d="M50 25 C45 15, 55 15, 50 25" stroke="#C1E1C1" stroke-width="8" stroke-linecap="round"/>
+                <path d="M40 22 L50 30 L60 22" stroke="#C1E1C1" stroke-width="6" stroke-linecap="round"/>
+                <circle cx="60" cy="45" r="4" fill="white" opacity="0.3"/>
+            </svg>
+        </div>
+
+    </div>
+
+    <script>
+        // 初始化变量
+        let initialTime = 25 * 60;
+        let timeLeft = initialTime;
+        let timerId = null;
+        let isRunning = false;
+        let tomatoCount = 0;
+        let currentMode = 'work';
+
+        // DOM 获取
+        const timerDisplay = document.getElementById('timer');
+        const startBtn = document.getElementById('startBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const finishEarlyBtn = document.getElementById('finishEarlyBtn');
+        const stopAlarmBtn = document.getElementById('stopAlarmBtn');
+        const statusLabel = document.getElementById('statusLabel');
+        const musicDisplay = document.getElementById('musicDisplay');
+        const controlGroup = document.getElementById('controlGroup');
+        const alarmAudio = document.getElementById('alarmAudio');
+        const counterDisplay = document.getElementById('counterDisplay');
+        const progressBar = document.getElementById('progress-bar');
+        const modeTitle = document.getElementById('modeTitle');
+
+        // 更新界面显示
+        function updateDisplay() {
+            const minutes = Math.floor(timeLeft / 60);
+            const seconds = timeLeft % 60;
+            const displayStr = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            timerDisplay.textContent = displayStr;
+            document.title = `${displayStr} - 可爱番茄钟`;
+            
+            // 更新进度条
+            const progress = ((initialTime - timeLeft) / initialTime) * 100;
+            progressBar.style.width = `${progress}%`;
+        }
+
+        // 切换模式
+        function setMode(mode) {
+            if(isRunning) pauseTimer();
+            currentMode = mode;
+            
+            document.querySelectorAll('.btn-mode').forEach(btn => btn.classList.remove('active'));
+            document.getElementById(`mode-${mode}`).classList.add('active');
+            
+            if (mode === 'work') {
+                initialTime = 25 * 60;
+                modeTitle.textContent = "专注时刻";
+                statusLabel.textContent = "准备好开始专注了吗？";
+            } else if (mode === 'short') {
+                initialTime = 5 * 60;
+                modeTitle.textContent = "小小休息";
+                statusLabel.textContent = "喝口水，伸个懒腰吧~";
+            } else if (mode === 'long') {
+                initialTime = 15 * 60;
+                modeTitle.textContent = "超长假期";
+                statusLabel.textContent = "奖励自己吃个小点心！";
+            }
+            
+            timeLeft = initialTime;
+            updateDisplay();
+        }
+
+        // 计时控制逻辑
+        function toggleTimer() {
+            if (isRunning) {
+                pauseTimer();
+            } else {
+                startTimer();
+            }
+        }
+
+        function startTimer() {
+            isRunning = true;
+            startBtn.textContent = '稍微歇一会';
+            statusLabel.textContent = '专注中... 加油小仙女！✨';
+            
+            timerId = setInterval(() => {
+                timeLeft--;
+                updateDisplay();
+                if (timeLeft <= 0) {
+                    clearInterval(timerId);
+                    if(currentMode === 'work') {
+                        tomatoCount++;
+                        counterDisplay.textContent = `今日成就: 🍅 x ${tomatoCount}`;
+                    }
+                    completeTimer();
+                }
+            }, 1000);
+        }
+
+        function pauseTimer() {
+            isRunning = false;
+            clearInterval(timerId);
+            startBtn.textContent = '继续专注';
+            statusLabel.textContent = '暂停中... 别跑太远哦~';
+        }
+
+        // 核心重置逻辑 (避免递归报错)
+        function resetTimer() {
+            isRunning = false;
+            clearInterval(timerId);
+            timeLeft = initialTime;
+            updateDisplay();
+            
+            startBtn.textContent = '开始专注吧';
+            statusLabel.textContent = 'Space 键可快速开关哦~';
+            
+            // 彻底停止音频
+            alarmAudio.pause();
+            alarmAudio.currentTime = 0;
+            
+            // UI 归位
+            stopAlarmBtn.classList.add('hidden-el');
+            musicDisplay.classList.add('hidden-el');
+            controlGroup.classList.remove('hidden-el');
+        }
+
+        // 计时结束触发
+        function completeTimer() {
+            clearInterval(timerId);
+            isRunning = false;
+            timeLeft = 0;
+            updateDisplay();
+            statusLabel.textContent = '叮！目标达成！🍵';
+            
+            // 切换 UI
+            controlGroup.classList.add('hidden-el');
+            stopAlarmBtn.classList.remove('hidden-el');
+            musicDisplay.classList.remove('hidden-el');
+
+            // 循环播放
+            alarmAudio.play().catch(err => {
+                console.warn("音频播放可能被浏览器拦截，请点击界面");
+            });
+        }
+
+        // 快捷键支持
+        document.addEventListener('keydown', (e) => {
+            if (e.code === 'Space') {
+                e.preventDefault(); // 防止页面滚动
+                if(!stopAlarmBtn.classList.contains('hidden-el')) {
+                    resetTimer();
+                } else {
+                    toggleTimer();
+                }
+            }
+        });
+
+        // 按钮绑定
+        startBtn.addEventListener('click', toggleTimer);
+        resetBtn.addEventListener('click', resetTimer);
+        finishEarlyBtn.addEventListener('click', completeTimer);
+        stopAlarmBtn.addEventListener('click', resetTimer);
+
+        // 初始运行
+        updateDisplay();
+    </script>
+</body>
+</html>
